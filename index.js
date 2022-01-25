@@ -3,7 +3,7 @@ const server = require('http').Server(app);
 const io = require('socket.io')(server);
 const port = 3000;
 
-server.listen(port,  () =>{
+server.listen('http://nodejs-chatter-test.herokuapp.com/',  () =>{
     console.log(`Server is running on port ${port}`);
 });
 
