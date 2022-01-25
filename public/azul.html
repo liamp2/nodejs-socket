@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB"
+    crossorigin="anonymous">
+    <title>Chatter</title>
+
+    <style>
+        form{
+            padding: 20px; position: fixed; bottom: 0; width: 100%; padding-right: 50px;
+        }
+        #messages {
+            list-style-type: none; margin: 0; padding: 0; width: 100%;
+        }
+
+        #messages li {
+            padding: 5px 10px;
+        }
+
+        #messages li:nth-child(odd){
+            background: #eee;
+        }
+        
+        .piece-holder {
+            min-width: 10rem;
+            min-height: 10rem;
+            background: #333;
+
+        }
+
+        .red-piece {
+            background: red;
+            min-width: 4rem;
+            min-height: 4rem;
+            max-width: 4rem;
+            z-index: 5;
+            padding: .5rem .5rem .5rem .5rem;
+        }
+
+        .blue-piece {
+            background: blue;
+            min-width: 4rem;
+            min-height: 4rem;
+            max-width: 4rem;
+            z-index: 5;
+            padding: .5rem .5rem .5rem .5rem;
+        }
+
+        .orange-piece {
+            background: orange;
+            color: red;
+            min-width: 4rem;
+            min-height: 4rem;
+            max-width: 4rem;
+            z-index: 5;
+            padding: .5rem .5rem .5rem .5rem;
+        }
+
+        .snowflake-piece {
+            background: cyan;
+            color: white;
+            min-width: 4rem;
+            min-height: 4rem;
+            max-width: 4rem;
+            z-index: 5;
+            padding: .5rem .5rem .5rem .5rem;
+        }
+
+        .black-piece {
+            background: black;
+            color: cyan;
+            min-width: 4rem;
+            min-height: 4rem;
+            max-width: 4rem;
+            z-index: 5;
+            padding: .5rem .5rem .5rem .5rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid">
+        
+        <div id="playing-area d-none" class="row">
+            <div class="col-6">
+                PIECES
+                <div class="d-flex flex-wrap holder-wrapper">
+
+                </div>
+            </div>
+            <div class="col-6">
+                BOARD
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6">
+                <form action="">
+                    <button id="end-turn-btn" class="btn btn-secondary" type="submit">End Turn</button>
+                    <button id="start-game-btn" class="btn btn-secondary d-none" type="submit" disabled>Start Game</button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+        
+        const room = 'azul';
+
+        const socket = io('/tech');
+
+        var host = false;
+        
+        $('form').submit(() => {
+            
+            // socket.emit('message', {msg, room});
+            
+            return false;
+        });
+
+        socket.on('connect', () => {
+            socket.emit('join', {room: room});
+        });
+
+        socket.on('message', (data) => {
+            $('#messages').append($('<li>').text(data.msg));
+        });
+
+        socket.on('host', () => {
+            console.log('you are the host');
+            host = true;
+            $('#start-game-btn').removeClass('d-none');
+
+        });       
+
+        socket.on('enableStartGame', () => {
+            console.log(host);
+
+            if (host) {
+                $('#start-game-btn').addClass('btn-success');
+                $('#start-game-btn').prop('disabled', false);
+                $('#start-game-btn').removeClass('btn-secondary');
+            }
+        });
+
+        $('#start-game-btn').on('click', () => {
+            socket.emit('initGame');
+        });
+
+        socket.on('initComplete', (data) => {
+
+            $('#playing-area').removeClass('d-none');
+            var n = data.users;
+            var numHolders = n*2 + 1;
+
+            for (var i = 0; i < numHolders; i++ ){
+                $('.holder-wrapper').append('<div  class="piece-holder m-2" ></div>');
+            }
+
+            $('.piece-holder').each( function()  {
+                console.log(i);
+                console.log(this);
+                $(this).append('<div class="blue-piece m-2"></div>');
+                $(this).append('<div class="red-piece m-2"></div>');
+                $(this).append('<div class="snowflake-piece m-2 text-center fs-1">*</div>');
+                $(this).append('<div class="orange-piece m-2 text-center fs-1">{&#&}</div>');
+            });
+        });
+
+        
+    </script>
+</body>
+</html>
