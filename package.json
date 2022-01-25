@@ -1,5 +1,5 @@
 {
-  "name": "socket.io",
+  "name": "nodejs-socket",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/liamp2/socket.io.git"
+    "url": "git+https://github.com/liamp2/nodejs-socket.git"
   },
   "author": "Liam Patterson",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/liamp2/socket.io/issues"
+    "url": "https://github.com/liamp2/nodejs-socket/issues"
   },
-  "homepage": "https://github.com/liamp2/socket.io#readme",
+  "homepage": "https://github.com/liamp2/nodejs-socket#readme",
   "dependencies": {
     "express": "^4.17.2",
     "nodemon": "^2.0.15",
