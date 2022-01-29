@@ -7,17 +7,23 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB"
     crossorigin="anonymous">
     <title>Chatter</title>
+
+
+    <!-- ANGULAR -->
+    <script src="https://code.angularjs.org/1.8.2/angular.min.js"></script>
+    <script src="https://code.angularjs.org/1.8.2/angular-messages.min.js"></script>
+    <script src="https://code.angularjs.org/1.8.2/angular-route.min.js"></script>
 </head>
 <body>
 
     <div class="jumbotron jumbotron-fluid">\
         <div class="container">
-            <h1 class="display-3">Tech Space Chatter</h1>
-            <p class="lead">Select which room you'd like to join below!</p>
+            <h1 class="display-3">Liam Patterson's Online Board Games</h1>
+            <p class="lead">Select which game you'd like to play below!</p>
         </div>
     </div>
 
-    <div class="container-fluid">
+    <div class="container-fluid" ng-app="roomApp" ng-controller="roomCtrl" ng-init="init()">
         <div class="row">
             <ul class="list-group col">
                 <a href="/javascript" class="list-group-item list-group-item-action">Javascript</a>
@@ -30,5 +36,21 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
     <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+        
+        const socket = io('/tech');
+
+        var app = angular.module('roomApp', []);
+
+        app.controller('roomCtrl', ['$scope', function($scope) {
+
+            $scope.init = function() {
+                
+               
+            }            
+            
+        }]);
+    </script>
 </body>
 </html>
