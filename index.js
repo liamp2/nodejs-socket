@@ -2,6 +2,12 @@ const app = require('express')();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 const port = process.env.PORT || 3000;
+
+const Queue = require('./classes/queue.js');
+const Game = require('./classes/game.js');
+
+
+test.test();
 var users = 0;
 
 server.listen(port,  () =>{
@@ -26,13 +32,12 @@ app.get('/html', (req, res) => {
 });
 
 // var activeRooms = [];
-const NUM_OF_PIECES_TYPE = 20;
-const NUM_PIECE_TYPES = 5;
-const PIECES_PER_HOLDER = 4;
+
 
 const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const charsLen = characters.length;
 const MAX_ROOM_SIZE = 4;
+
 generateRoomCode = function() {
 
     var length = 6;
@@ -53,6 +58,7 @@ Room = function() {
     // this.code = 'LIAM';
     this.numPlayers = 0;
     this.open = true;
+    this.active = true;
     // this.socket = io.of('/'+this.code);
    
 
@@ -70,6 +76,14 @@ Room = function() {
         }
         console.log(this);
     }
+
+    this.closeRoom = function() {
+
+        this.open = false;
+        return true;
+    }
+
+    
 }
 
 ActiveRooms = function() {
@@ -105,10 +119,28 @@ ActiveRooms = function() {
         }
         return false;
     }
+
+    this.closeRoom = function(roomCode) {
+
+        if (this.checkRoomCode(roomCode)) {
+            
+            return this.rooms[roomCode].closeRoom();
+        }
+    }
+
+    this.getRoom = function(roomCode) {
+
+        if (this.checkRoomCode(roomCode)) {
+            
+            return this.rooms[roomCode];
+        }
+    }
 }
 
-var activeRooms = new ActiveRooms();
 
+
+var activeRooms = new ActiveRooms();
+var game = new Game();
 // namespace
 const azul = io.of('/azulHome');
 const tech = io.of('/tech');
@@ -121,7 +153,7 @@ azul.on('connection', (socket) =>{
         activeRooms.addRoom(room);
         activeRooms.addPlayer(room.code);
         socket.join(room.code);
-        socket.emit('roomCreated', room.code);
+        socket.emit('roomCreated', room);
     });
 
     socket.on('joinRoom', (roomCode) => {
@@ -130,10 +162,10 @@ azul.on('connection', (socket) =>{
             
             console.log(activeRooms);
             socket.join(roomCode);
-            socket.emit('joinedRoom');
+            azul.in(roomCode).emit('joinedRoom', activeRooms.rooms[roomCode]);
 
         } else {
-            
+
             socket.emit('roomFull', activeRooms[roomCode]);
         }
     });
@@ -144,6 +176,16 @@ azul.on('connection', (socket) =>{
         socket.in(roomCode).emit('alertHost');
     });
     
+
+    socket.on('initGame', (room) =>{
+
+        activeRooms.closeRoom(room.code);
+
+        var data = {room: activeRooms.getRoom(room.code), game: new Game()};
+
+        azul.in(room.code).emit('initComplete', data);
+
+    });
 });
 
 tech.on('connection', (socket) => {
