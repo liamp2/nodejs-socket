@@ -49,11 +49,11 @@ generateRoomCode = function() {
 Room = function() {
 
     console.log('room constructor');
-    // this.code = generateRoomCode();
-    this.code = 'LIAM';
+    this.code = generateRoomCode();
+    // this.code = 'LIAM';
     this.numPlayers = 0;
     this.open = true;
-    this.socket = io.of('/'+this.code);
+    // this.socket = io.of('/'+this.code);
    
 
     this.addPlayer = function() {
@@ -70,15 +70,6 @@ Room = function() {
         }
         console.log(this);
     }
-
-    // this.socket.on('connection', (socket) => {
-    //     console.log('room socket connect');
-
-    //     socket.on('askHost', (data) => {
-    //         console.log('asking host');
-    //         this.socket.emit('alertHost');
-    //     })
-    // })
 }
 
 ActiveRooms = function() {
@@ -86,11 +77,10 @@ ActiveRooms = function() {
     this.rooms = {};
 
     this.checkRoomCode = function(code) {
-        console.log('check room code');
-        console.log(code);
+        
         var valid = false;
-        console.log(this.rooms);
-        console.log(this.rooms.hasOwnProperty(code));
+        // console.log(this.rooms);
+        // console.log(this.rooms.hasOwnProperty(code));
         return this.rooms.hasOwnProperty(code);
     }
 
@@ -108,9 +98,9 @@ ActiveRooms = function() {
     }
 
     this.addPlayer = function(roomCode) {
-        console.log('active rooms adding players')
+        
         if (this.checkRoomCode(roomCode)) {
-            console.log('good room');
+        
             return this.rooms[roomCode].addPlayer();
         }
         return false;
@@ -119,52 +109,43 @@ ActiveRooms = function() {
 
 var activeRooms = new ActiveRooms();
 
-// tech namespace
-const tech = io.of('/tech');
+// namespace
 const azul = io.of('/azulHome');
-const liam = io.of('/LIAM');
+const tech = io.of('/tech');
 
 azul.on('connection', (socket) =>{
 
     socket.on('createRoom', (data) => {
-        console.log('create room');
             
         var room = new Room();
         activeRooms.addRoom(room);
         activeRooms.addPlayer(room.code);
-                
+        socket.join(room.code);
         socket.emit('roomCreated', room.code);
     });
 
     socket.on('joinRoom', (roomCode) => {
       
         if (activeRooms.addPlayer(roomCode)) {
-            console.log('added plater to room');
+            
             console.log(activeRooms);
+            socket.join(roomCode);
             socket.emit('joinedRoom');
+
         } else {
+            
             socket.emit('roomFull', activeRooms[roomCode]);
         }
+    });
+
+    socket.on('askHost', (roomCode) => {
+        console.log('asking host');
+        socket.emit('alertHost', roomCode);
+        socket.in(roomCode).emit('alertHost');
     });
     
 });
 
-liam.on('connection', (socket) => {
-    socket.on('askHost', (data) => {
-        console.log('alertHost LIAM');
-        console.log(data);
-        liam.emit('alertHost');
-    });
-});
-io.on('connection', (socket) => {
-
-    socket.on('askHost', (data) => {
-        console.log('alertHost');
-        console.log(data);
-        io.emit('alertHost');
-    });
-
-});
 tech.on('connection', (socket) => {
     
     socket.on('join', (data) => {
@@ -202,11 +183,7 @@ tech.on('connection', (socket) => {
     //     }
     // });
 
-    socket.on('askHost', (roomCode) => {
-        console.log('asking host');
-        socket.emit('alertHost', roomCode);
-        tech.emit('alertHost');
-    });
+    
 
     // socket.on('message', (data) => {
     //     console.log(`message: ${data.msg}`);

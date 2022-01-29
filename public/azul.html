@@ -137,9 +137,7 @@
         
         const room = 'azul';
 
-        const socket = io();
-
-        const azul = io('/azulHome');
+        const socket = io('/azulHome');
 
         var app = angular.module('azulApp', []);
 
@@ -148,81 +146,65 @@
 
         app.controller('azulCtrl', ['$scope', function($scope) {
 
-            var roomSocket = '';
-
             $scope.init = function() {
                 
                 $scope.host = false;
-                $scope.room = {active: false};
-                $scope.roomSocket;
-                $scope.socketName;
-                
+                $scope.room = {active: false};                
             }
 
             
 
             $scope.createRoom = function() {
-                console.log('creating room');
-                azul.emit('createRoom');
                 
+                socket.emit('createRoom');
             }
-            
-            
 
-            azul.on('roomCreated', (data) => {
-                console.log('room created');
-                console.log
+            socket.on('roomCreated', (data) => {
+               
                 $scope.room.code = data;
                 $scope.room.active = true;
                 $scope.host = true;
-
-                roomSocket = '/'+$scope.room.code;
-
+               
                 $scope.$apply();
             });
 
             $scope.joinRoom = function() {
 
-                azul.emit('joinRoom', $scope.room.code);
+                socket.emit('joinRoom', $scope.room.code);
             }
 
-            azul.on('joinedRoom', () => {
+            socket.on('joinedRoom', () => {
                 console.log('player joined room');
 
                 $scope.room.active = true;
-                
-
-                roomSocket = '/'+$scope.room.code;
-                
+                            
                 $scope.$apply();
             })
 
-            socket.on('message', (data) => {
-                console.log(data);
-            });
+            // socket.on('message', (data) => {
+            //     console.log(data);
+            // });
 
-            socket.on('host', () => {
-                console.log('you are the host');
-                // $scope.host = true;
-                // $('#start-game-btn').removeClass('d-none');
+            // socket.on('host', () => {
+            //     console.log('you are the host');
+                
+            //     $scope.$apply();
 
-                $scope.$apply();
-
-            });       
+            // });       
 
             $scope.askHost = function() {
-                console.log(roomSocket);
-                // socket.emit('askHost', $scope.room.code);
-                io(roomSocket).emit('askHost', $scope.room.code);
+                
+                socket.emit('askHost', $scope.room.code);
             }
 
-            io(roomSocket).on('alertHost', (roomCode) => {
-                console.log('host alerted');
+            socket.on('alertHost', (roomCode) => {
+                
                 $('#start-game-btn').addClass('btn-success');
                 $('#start-game-btn').removeClass('btn-secondary');
-                if ($scope.host && $scope.room.code == roomCode){
-                    alert('Start the game');
-                } 
+
+                // if ($scope.host && $scope.room.code == roomCode) {
+                //     alert('Start the game');
+                // } 
             });
 
             socket.on('enableStartGame', () => {
