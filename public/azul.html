@@ -137,7 +137,9 @@
         
         const room = 'azul';
 
-        const socket = io('/tech');
+        const socket = io();
+
+        const azul = io('/azulHome');
 
         var app = angular.module('azulApp', []);
 
@@ -146,59 +148,54 @@
 
         app.controller('azulCtrl', ['$scope', function($scope) {
 
+            var roomSocket = '';
+
             $scope.init = function() {
                 
                 $scope.host = false;
                 $scope.room = {active: false};
-                console.log("init");
+                $scope.roomSocket;
+                $scope.socketName;
+                
             }
 
             
-            $scope.test = function() {
-                console.log('inside test');
-
-            }
 
             $scope.createRoom = function() {
                 console.log('creating room');
-                socket.emit('createRoom');
-            }
-
-
-            $scope.askHost = function() {
-                socket.emit('askHost', $scope.room.code);
-            }
-            
-            // $('form').submit(() => {
-            
-            //     // socket.emit('message', {msg, room});
+                azul.emit('createRoom');
                 
-            //     return false;
-            // });
+            }
+            
+            
 
-            socket.on('roomCreated', (data) => {
+            azul.on('roomCreated', (data) => {
                 console.log('room created');
                 console.log
                 $scope.room.code = data;
                 $scope.room.active = true;
                 $scope.host = true;
+
+                roomSocket = '/'+$scope.room.code;
+
                 $scope.$apply();
             });
 
             $scope.joinRoom = function() {
 
-                socket.emit('joinRoom', $scope.room.code);
+                azul.emit('joinRoom', $scope.room.code);
             }
 
-            socket.on('joinedRoom', () => {
+            azul.on('joinedRoom', () => {
                 console.log('player joined room');
+
                 $scope.room.active = true;
+                
+
+                roomSocket = '/'+$scope.room.code;
+                
                 $scope.$apply();
             })
-
-            // socket.on('connect', () => {
-            //     socket.emit('join', {room: room});
-            // });
 
             socket.on('message', (data) => {
                 console.log(data);
@@ -213,7 +210,13 @@
 
             });       
 
-            socket.on('alertHost', (roomCode) => {
+            $scope.askHost = function() {
+                console.log(roomSocket);
+                // socket.emit('askHost', $scope.room.code);
+                io(roomSocket).emit('askHost', $scope.room.code);
+            }
+
+            io(roomSocket).on('alertHost', (roomCode) => {
                 console.log('host alerted');
                 $('#start-game-btn').addClass('btn-success');
                 $('#start-game-btn').removeClass('btn-secondary');

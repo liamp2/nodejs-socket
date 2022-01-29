@@ -49,10 +49,11 @@ generateRoomCode = function() {
 Room = function() {
 
     console.log('room constructor');
-    this.code = generateRoomCode();
+    // this.code = generateRoomCode();
+    this.code = 'LIAM';
     this.numPlayers = 0;
     this.open = true;
-
+    this.socket = io.of('/'+this.code);
    
 
     this.addPlayer = function() {
@@ -69,6 +70,15 @@ Room = function() {
         }
         console.log(this);
     }
+
+    // this.socket.on('connection', (socket) => {
+    //     console.log('room socket connect');
+
+    //     socket.on('askHost', (data) => {
+    //         console.log('asking host');
+    //         this.socket.emit('alertHost');
+    //     })
+    // })
 }
 
 ActiveRooms = function() {
@@ -111,21 +121,50 @@ var activeRooms = new ActiveRooms();
 
 // tech namespace
 const tech = io.of('/tech');
+const azul = io.of('/azulHome');
+const liam = io.of('/LIAM');
 
+azul.on('connection', (socket) =>{
 
-// io.on('connection', (socket) =>{
-//     socket.on('createRoom', (data) => {
-//         console.log('create room');
+    socket.on('createRoom', (data) => {
+        console.log('create room');
             
-//         var room = new Room();
-//         activeRooms.addRoom(room);
-//         activeRooms.addPlayer(room.code);
+        var room = new Room();
+        activeRooms.addRoom(room);
+        activeRooms.addPlayer(room.code);
                 
-//         socket.emit('roomCreated', room.code);
-//     });
-    
-// });
+        socket.emit('roomCreated', room.code);
+    });
 
+    socket.on('joinRoom', (roomCode) => {
+      
+        if (activeRooms.addPlayer(roomCode)) {
+            console.log('added plater to room');
+            console.log(activeRooms);
+            socket.emit('joinedRoom');
+        } else {
+            socket.emit('roomFull', activeRooms[roomCode]);
+        }
+    });
+    
+});
+
+liam.on('connection', (socket) => {
+    socket.on('askHost', (data) => {
+        console.log('alertHost LIAM');
+        console.log(data);
+        liam.emit('alertHost');
+    });
+});
+io.on('connection', (socket) => {
+
+    socket.on('askHost', (data) => {
+        console.log('alertHost');
+        console.log(data);
+        io.emit('alertHost');
+    });
+
+});
 tech.on('connection', (socket) => {
     
     socket.on('join', (data) => {
@@ -152,21 +191,21 @@ tech.on('connection', (socket) => {
     //     socket.emit('roomCreated', room.code);
     // });
 
-    socket.on('joinRoom', (roomCode) => {
+    // socket.on('joinRoom', (roomCode) => {
       
-        if (activeRooms.addPlayer(roomCode)) {
-            console.log('added plater to room');
-            console.log(activeRooms);
-            socket.emit('joinedRoom');
-        } else {
-            tech.emit('roomFull', activeRooms[roomCode]);
-        }
-    });
+    //     if (activeRooms.addPlayer(roomCode)) {
+    //         console.log('added plater to room');
+    //         console.log(activeRooms);
+    //         socket.emit('joinedRoom');
+    //     } else {
+    //         tech.emit('roomFull', activeRooms[roomCode]);
+    //     }
+    // });
 
     socket.on('askHost', (roomCode) => {
         console.log('asking host');
         socket.emit('alertHost', roomCode);
-        tech.in(roomCode).emit('alertHost');
+        tech.emit('alertHost');
     });
 
     // socket.on('message', (data) => {
