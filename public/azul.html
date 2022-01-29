@@ -80,11 +80,29 @@
         }
 
     </style>
-</head>
-<body>
 
-    <div class="container-fluid">
-        
+    <!-- ANGULAR -->
+    <script src="https://code.angularjs.org/1.8.2/angular.min.js"></script>
+    <script src="https://code.angularjs.org/1.8.2/angular-messages.min.js"></script>
+    <script src="https://code.angularjs.org/1.8.2/angular-route.min.js"></script>
+</head>
+<body  ng-app="azulApp" ng-controller="azulCtrl" ng-cloack ng-init="init()">
+
+    <a href="/" class="btn btn-sm btn-primary">Home</a>
+    <div class="container-fluid row py-5" ng-hide="room.active">
+        <div class="col-6 text-right">
+            <button class=" btn btn-sm btn-primary" ng-click="createRoom()">Create Room</button>
+        </div>
+        <div class="col-6 text-left">
+          <div class="input-group">
+            <input class="form-control" type="text" ng-model="room.code">
+            <button class="btn btn-sm btn-primary" ng-click="joinRoom()">Join Room</button>
+          </div>
+        </div>
+    </div>
+
+    <div class="container-fluid" ng-show="room.active">
+        <div class="row bg-info py-2">Room Code: {{room.code}}</div>
         <div id="playing-area d-none" class="row">
             <div class="col-6">
                 PIECES
@@ -99,14 +117,17 @@
 
         <div class="row">
             <div class="col-lg-6">
-                <form action="">
+                <!-- <form action=""> -->
                     <button id="end-turn-btn" class="btn btn-secondary" type="submit">End Turn</button>
-                    <button id="start-game-btn" class="btn btn-secondary d-none" type="submit" disabled>Start Game</button>
-                </form>
+                    <button id="start-game-btn" ng-show="host" ng-click="startGame()" class="btn btn-secondary" disabled>Start Game</button>
+                    <button id="start-game-btn" ng-show="!host" ng-click="askHost()" class="btn btn-secondary"  >Ask Host to Star Game</button>
+                <!-- </form> -->
 
             </div>
         </div>
     </div>
+
+    
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
@@ -116,65 +137,134 @@
         
         const room = 'azul';
 
-        const socket = io('/tech');
+        const socket = io();
 
-        var host = false;
-        
-        $('form').submit(() => {
-            
-            // socket.emit('message', {msg, room});
-            
-            return false;
-        });
+        var app = angular.module('azulApp', []);
 
-        socket.on('connect', () => {
-            socket.emit('join', {room: room});
-        });
 
-        socket.on('message', (data) => {
-            $('#messages').append($('<li>').text(data.msg));
-        });
 
-        socket.on('host', () => {
-            console.log('you are the host');
-            host = true;
-            $('#start-game-btn').removeClass('d-none');
 
-        });       
+        app.controller('azulCtrl', ['$scope', function($scope) {
 
-        socket.on('enableStartGame', () => {
-            console.log(host);
-
-            if (host) {
-                $('#start-game-btn').addClass('btn-success');
-                $('#start-game-btn').prop('disabled', false);
-                $('#start-game-btn').removeClass('btn-secondary');
-            }
-        });
-
-        $('#start-game-btn').on('click', () => {
-            socket.emit('initGame');
-        });
-
-        socket.on('initComplete', (data) => {
-
-            $('#playing-area').removeClass('d-none');
-            var n = data.users;
-            var numHolders = n*2 + 1;
-
-            for (var i = 0; i < numHolders; i++ ){
-                $('.holder-wrapper').append('<div  class="piece-holder m-2" ></div>');
+            $scope.init = function() {
+                
+                $scope.host = false;
+                $scope.room = {active: false};
+                console.log("init");
             }
 
-            $('.piece-holder').each( function()  {
-                console.log(i);
-                console.log(this);
-                $(this).append('<div class="blue-piece m-2"></div>');
-                $(this).append('<div class="red-piece m-2"></div>');
-                $(this).append('<div class="snowflake-piece m-2 text-center fs-1">*</div>');
-                $(this).append('<div class="orange-piece m-2 text-center fs-1">{&#&}</div>');
+            
+            $scope.test = function() {
+                console.log('inside test');
+
+            }
+
+            $scope.createRoom = function() {
+                console.log('creating room');
+                socket.emit('createRoom');
+            }
+
+
+            $scope.askHost = function() {
+                socket.emit('askHost', $scope.room.code);
+            }
+            
+            // $('form').submit(() => {
+            
+            //     // socket.emit('message', {msg, room});
+                
+            //     return false;
+            // });
+
+            socket.on('roomCreated', (data) => {
+                console.log('room created');
+                console.log
+                $scope.room.code = data;
+                $scope.room.active = true;
+                $scope.host = true;
+                $scope.$apply();
             });
-        });
+
+            $scope.joinRoom = function() {
+
+                socket.emit('joinRoom', $scope.room.code);
+            }
+
+            socket.on('joinedRoom', () => {
+                console.log('player joined room');
+                $scope.room.active = true;
+                $scope.$apply();
+            })
+
+            // socket.on('connect', () => {
+            //     socket.emit('join', {room: room});
+            // });
+
+            socket.on('message', (data) => {
+                console.log(data);
+            });
+
+            socket.on('host', () => {
+                console.log('you are the host');
+                // $scope.host = true;
+                // $('#start-game-btn').removeClass('d-none');
+
+                $scope.$apply();
+
+            });       
+
+            socket.on('alertHost', (roomCode) => {
+                console.log('host alerted');
+                $('#start-game-btn').addClass('btn-success');
+                $('#start-game-btn').removeClass('btn-secondary');
+                if ($scope.host && $scope.room.code == roomCode){
+                    alert('Start the game');
+                } 
+            });
+
+            socket.on('enableStartGame', () => {
+                
+                $scope.test();
+                if ($scope.host) {
+
+                    $('#start-game-btn').addClass('btn-success');
+                    $('#start-game-btn').prop('disabled', false);
+                    $('#start-game-btn').removeClass('btn-secondary');
+                }
+            });
+
+            $scope.startGame = function () {
+                socket.emit('initGame');
+            }
+
+            socket.on('initComplete', (data) => {
+
+                
+
+                $('#playing-area').removeClass('d-none');
+                var n = data.users;
+                var numHolders = n*2 + 1;
+
+                for (var i = 0; i < numHolders; i++ ){
+                    $('.holder-wrapper').append('<div  class="piece-holder m-2" ></div>');
+                }
+
+                $('.piece-holder').each( function()  {
+                    console.log(i);
+                    console.log(this);
+                    $(this).append('<div class="blue-piece m-2"></div>');
+                    $(this).append('<div class="red-piece m-2"></div>');
+                    $(this).append('<div class="snowflake-piece m-2 text-center fs-1">*</div>');
+                    $(this).append('<div class="orange-piece m-2 text-center fs-1">{&#&}</div>');
+                });
+            });
+            
+            
+            
+
+        }]);
+        
+        
 
         
     </script>
