@@ -6,8 +6,6 @@ const port = process.env.PORT || 3000;
 const Queue = require('./classes/queue.js');
 const Game = require('./classes/game.js');
 
-
-test.test();
 var users = 0;
 
 server.listen(port,  () =>{
