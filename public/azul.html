@@ -24,14 +24,22 @@
             background: #eee;
         }
         
-        .piece-holder {
+        .factory {
             min-width: 10rem;
             min-height: 10rem;
             background: #333;
 
         }
 
-        .red-piece {
+        .tile {
+            min-width: 4rem;
+            min-height: 4rem;
+            max-width: 4rem;
+            z-index: 5;
+            padding: .5rem .5rem .5rem .5rem;
+        }
+
+        .red-tile {
             background: red;
             min-width: 4rem;
             min-height: 4rem;
@@ -40,7 +48,7 @@
             padding: .5rem .5rem .5rem .5rem;
         }
 
-        .blue-piece {
+        .blue-tile {
             background: blue;
             min-width: 4rem;
             min-height: 4rem;
@@ -49,7 +57,7 @@
             padding: .5rem .5rem .5rem .5rem;
         }
 
-        .orange-piece {
+        .orange-tile {
             background: orange;
             color: red;
             min-width: 4rem;
@@ -59,7 +67,7 @@
             padding: .5rem .5rem .5rem .5rem;
         }
 
-        .snowflake-piece {
+        .light-blue-tile {
             background: cyan;
             color: white;
             min-width: 4rem;
@@ -69,7 +77,7 @@
             padding: .5rem .5rem .5rem .5rem;
         }
 
-        .black-piece {
+        .black-tile {
             background: black;
             color: cyan;
             min-width: 4rem;
@@ -81,6 +89,7 @@
 
     </style>
 
+    <script  src="../bundle.js"></script> 
     <!-- ANGULAR -->
     <script src="https://code.angularjs.org/1.8.2/angular.min.js"></script>
     <script src="https://code.angularjs.org/1.8.2/angular-messages.min.js"></script>
@@ -103,11 +112,17 @@
 
     <div class="container-fluid" ng-show="room.active">
         <div class="row bg-info py-2">Room Code: {{room.code}}</div>
-        <div id="playing-area d-none" class="row">
+        <div id="playing-area" ng-show="game.active" class="row">
             <div class="col-6">
                 PIECES
                 <div class="d-flex flex-wrap holder-wrapper">
+                    <div  class="factory m-2" ng-repeat="factory in game.factories">
 
+                        <div ng-repeat="tile in factory.tiles track by $index">
+                            <div class="tile {{tile}}-tile"></div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
             <div class="col-6">
@@ -118,8 +133,9 @@
         <div class="row">
             <div class="col-lg-6">
                 <!-- <form action=""> -->
-                    <button id="end-turn-btn" class="btn btn-secondary" type="submit">End Turn</button>
-                    <button id="start-game-btn" ng-show="host" ng-click="startGame()" class="btn btn-secondary" disabled>Start Game</button>
+                    <button id="end-turn-btn" ng-show="game.active" class="btn btn-secondary" type="submit">End Turn</button>
+                    <div > {{room.numPlayers}} player(s) are waiting.</div>
+                    <button id="start-game-btn" ng-show="host" ng-click="startGame()" class="btn btn-secondary" ng-class="{'btn-success': room.numPlayers >= 2}" ng-disabled="room.numPlayers < 2">Start Game</button>
                     <button id="start-game-btn" ng-show="!host" ng-click="askHost()" class="btn btn-secondary"  >Ask Host to Star Game</button>
                 <!-- </form> -->
 
@@ -132,24 +148,32 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
     <script src="/socket.io/socket.io.js"></script>
-
+    
+    
+    
+    
+    
+   
     <script>
-        
+
+     
+
         const room = 'azul';
 
         const socket = io('/azulHome');
 
+        // const test = require('../classes/test.js');
+
         var app = angular.module('azulApp', []);
-
-
-
 
         app.controller('azulCtrl', ['$scope', function($scope) {
 
             $scope.init = function() {
                 
                 $scope.host = false;
-                $scope.room = {active: false};                
+                $scope.room = {active: false, numPlayers: 0 };   
+                
+                $scope.game = {};
             }
 
             
@@ -159,10 +183,9 @@
                 socket.emit('createRoom');
             }
 
-            socket.on('roomCreated', (data) => {
+            socket.on('roomCreated', (room) => {
                
-                $scope.room.code = data;
-                $scope.room.active = true;
+                $scope.room = room;
                 $scope.host = true;
                
                 $scope.$apply();
@@ -173,24 +196,14 @@
                 socket.emit('joinRoom', $scope.room.code);
             }
 
-            socket.on('joinedRoom', () => {
+            socket.on('joinedRoom', (room) => {
                 console.log('player joined room');
-
-                $scope.room.active = true;
+                console.log(room);
+                
+                $scope.room = room;
                             
                 $scope.$apply();
             })
-
-            // socket.on('message', (data) => {
-            //     console.log(data);
-            // });
-
-            // socket.on('host', () => {
-            //     console.log('you are the host');
-                
-            //     $scope.$apply();
-
-            // });       
 
             $scope.askHost = function() {
                 
@@ -219,29 +232,19 @@
             });
 
             $scope.startGame = function () {
-                socket.emit('initGame');
+                socket.emit('initGame', $scope.room);
             }
 
             socket.on('initComplete', (data) => {
 
-                
+                console.log('init complete');
+                console.log(data);
 
-                $('#playing-area').removeClass('d-none');
-                var n = data.users;
-                var numHolders = n*2 + 1;
+                $scope.game = data.game;
+                $scope.room = data.room;
 
-                for (var i = 0; i < numHolders; i++ ){
-                    $('.holder-wrapper').append('<div  class="piece-holder m-2" ></div>');
-                }
 
-                $('.piece-holder').each( function()  {
-                    console.log(i);
-                    console.log(this);
-                    $(this).append('<div class="blue-piece m-2"></div>');
-                    $(this).append('<div class="red-piece m-2"></div>');
-                    $(this).append('<div class="snowflake-piece m-2 text-center fs-1">*</div>');
-                    $(this).append('<div class="orange-piece m-2 text-center fs-1">{&#&}</div>');
-                });
+                $scope.$apply();
             });
             
             
