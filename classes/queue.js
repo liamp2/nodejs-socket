@@ -12,6 +12,9 @@ class Queue {
     }
 
     dequeue() {
+        
+        if (this.tail == this.head) return false;
+
         var item = this.items[this.head];
         delete this.items[this.head];
         this.head ++;
@@ -23,3 +26,4 @@ class Queue {
     }
 }
 module.exports = Queue;
+console.log('in queue');

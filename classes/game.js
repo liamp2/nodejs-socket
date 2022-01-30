@@ -1,18 +1,29 @@
 
 const Queue = require('./queue.js');
+const Factory = require('./factory.js');
 
 const NUM_PIECES_PER_TYPE = 20;
 const NUM_OF_PIECE_TYPES = 5;
-const PIECES_PER_HOLDER = 4;
+const PIECES_PER_FACTORY = 4;
 
 module.exports = class Game {
 
-    constructor() {
-
+    constructor(room) {
+        console.log('constructing game');
+        console.log(room);
         this.pieces = new Queue();
         
         this.active = true;
         this.randomizePieces();
+        this.numFactories = (room.numPlayers * 2) + 1;
+
+        this.factories = [];
+
+        for (var i = 0; i < this.numFactories; i ++) {
+            this.factories[i] = new Factory();
+        }
+        console.log(this.factories);
+        this.fillFactories();
     }
 
     randomizePieces() {
@@ -39,10 +50,36 @@ module.exports = class Game {
             }
 
         } while (this.pieces.length() < 100);
+
         console.log(this);
     }
 
-    
+
+
+    fillFactories() {
+        
+        var self = this;
+
+        this.factories.forEach(function(factory, i) {
+            
+            for (var i = 0; i < PIECES_PER_FACTORY; i ++){
+                var tile = self.pieces.dequeue()
+
+                if (tile) {
+
+
+                    factory.addTile(tile);
+
+                } else {
+
+                    throw 'Bag is empty';
+                    return false; 
+                }
+            }
+        });
+
+        console.log(this);
+    }    
 }
 
-// module.export = Game;
+// module.exports = Game;
