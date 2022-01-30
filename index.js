@@ -6,7 +6,17 @@ const port = process.env.PORT || 3000;
 const Queue = require('./classes/queue.js');
 const Game = require('./classes/game.js');
 
+console.log('top');
 var users = 0;
+// var game = new Game();
+console.log(game);
+
+var queue = new Queue();
+
+console.log('first queue item: ' + queue.dequeue())
+
+
+
 
 server.listen(port,  () =>{
     console.log('listening');
@@ -49,18 +59,20 @@ generateRoomCode = function() {
 }
 
 
-Room = function() {
+class Room {
 
-    console.log('room constructor');
-    this.code = generateRoomCode();
-    // this.code = 'LIAM';
-    this.numPlayers = 0;
-    this.open = true;
-    this.active = true;
-    // this.socket = io.of('/'+this.code);
+    
+    constructor() {
+        this.code = generateRoomCode();
+        // this.code = 'LIAM';
+        this.numPlayers = 0;
+        this.open = true;
+        this.active = true;
+        // this.socket = io.of('/'+this.code);
+    }
    
 
-    this.addPlayer = function() {
+    addPlayer = function() {
         console.log('adding player');
         if (this.open) {
 
@@ -75,7 +87,7 @@ Room = function() {
         console.log(this);
     }
 
-    this.closeRoom = function() {
+    closeRoom = function() {
 
         this.open = false;
         return true;
@@ -84,11 +96,15 @@ Room = function() {
     
 }
 
-ActiveRooms = function() {
+class ActiveRooms {
 
-    this.rooms = {};
+    constructor() {
+        this.rooms = {};
+    }
 
-    this.checkRoomCode = function(code) {
+    
+
+    checkRoomCode = function(code) {
         
         var valid = false;
         // console.log(this.rooms);
@@ -96,7 +112,7 @@ ActiveRooms = function() {
         return this.rooms.hasOwnProperty(code);
     }
 
-    this.addRoom = function(room) {
+    addRoom = function(room) {
 
 
         if (!this.checkRoomCode(room.code)) {
@@ -104,12 +120,12 @@ ActiveRooms = function() {
         }
     }
 
-    this.isRoomOpen = function(code) {
+    isRoomOpen = function(code) {
         
         return (rooms[code].open);
     }
 
-    this.addPlayer = function(roomCode) {
+    addPlayer = function(roomCode) {
         
         if (this.checkRoomCode(roomCode)) {
         
@@ -118,7 +134,7 @@ ActiveRooms = function() {
         return false;
     }
 
-    this.closeRoom = function(roomCode) {
+    closeRoom = function(roomCode) {
 
         if (this.checkRoomCode(roomCode)) {
             
@@ -126,7 +142,7 @@ ActiveRooms = function() {
         }
     }
 
-    this.getRoom = function(roomCode) {
+    getRoom = function(roomCode) {
 
         if (this.checkRoomCode(roomCode)) {
             
@@ -138,7 +154,13 @@ ActiveRooms = function() {
 
 
 var activeRooms = new ActiveRooms();
-var game = new Game();
+var room = new Room();
+room.addPlayer();
+console.log(room);
+var game = new Game(room);
+
+
+// game.fillFactories();
 // namespace
 const azul = io.of('/azulHome');
 const tech = io.of('/tech');
@@ -179,7 +201,7 @@ azul.on('connection', (socket) =>{
 
         activeRooms.closeRoom(room.code);
 
-        var data = {room: activeRooms.getRoom(room.code), game: new Game()};
+        var data = {room: activeRooms.getRoom(room.code), game: new Game(room)};
 
         azul.in(room.code).emit('initComplete', data);
 
