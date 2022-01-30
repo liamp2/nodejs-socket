@@ -20,7 +20,7 @@
             padding: 5px 10px;
         }
 
-        #messages li:nth-child(odd){
+        .buffer-row:nth-child(odd){
             background: #eee;
         }
         
@@ -37,13 +37,17 @@
             max-width: 4rem;
             z-index: 5;
             padding: .5rem .5rem .5rem .5rem;
+            
         }
+
+        
 
         .red-tile {
             background: red;
             min-width: 4rem;
             min-height: 4rem;
             max-width: 4rem;
+            max-height: 4rem;
             z-index: 5;
             padding: .5rem .5rem .5rem .5rem;
         }
@@ -53,6 +57,7 @@
             min-width: 4rem;
             min-height: 4rem;
             max-width: 4rem;
+            max-height: 4rem;
             z-index: 5;
             padding: .5rem .5rem .5rem .5rem;
         }
@@ -61,8 +66,9 @@
             background: orange;
             color: red;
             min-width: 4rem;
-            min-height: 4rem;
             max-width: 4rem;
+            min-height: 4rem;
+            max-height: 4rem;
             z-index: 5;
             padding: .5rem .5rem .5rem .5rem;
         }
@@ -73,6 +79,7 @@
             min-width: 4rem;
             min-height: 4rem;
             max-width: 4rem;
+            max-height: 4rem;
             z-index: 5;
             padding: .5rem .5rem .5rem .5rem;
         }
@@ -83,6 +90,7 @@
             min-width: 4rem;
             min-height: 4rem;
             max-width: 4rem;
+            max-height: 4rem;
             z-index: 5;
             padding: .5rem .5rem .5rem .5rem;
         }
@@ -116,10 +124,10 @@
             <div class="col-6">
                 PIECES
                 <div class="d-flex flex-wrap holder-wrapper">
-                    <div  class="factory m-2" ng-repeat="factory in game.factories">
+                    <div  class="factory d-flex m-2" ng-repeat="factory in game.factories">
 
-                        <div ng-repeat="tile in factory.tiles track by $index">
-                            <div class="tile {{tile}}-tile"></div>
+                        <div class="d-flex" ng-repeat="tile in factory.tiles track by $index">
+                            <div class="tile rounded rounded-3 border mx-2 border-dark {{tile}}-tile"></div>
                         </div>
 
                     </div>
@@ -127,6 +135,16 @@
             </div>
             <div class="col-6">
                 BOARD
+                <div class="buffer">
+                    <div ng-repeat="row in board.rows" class="buffer-row d-flex flex-row-reverse col-12 row py-2">
+                        <div ng-repeat="tile in [].constructor(row.size) track by $index" 
+                            ng-class="{'{{row.colour}}-tile': $index < row.full}"
+                            class="tile rounded rounded-3 border mx-2 border-dark">{{$index}}
+                        
+                        </div>
+                    </div>
+                    
+                </div>
             </div>
         </div>
 
@@ -156,7 +174,7 @@
    
     <script>
 
-     
+        const DEBUG = true;
 
         const room = 'azul';
 
@@ -169,11 +187,27 @@
         app.controller('azulCtrl', ['$scope', function($scope) {
 
             $scope.init = function() {
-                
+                console.log('init');
                 $scope.host = false;
                 $scope.room = {active: false, numPlayers: 0 };   
                 
                 $scope.game = {};
+                $scope.board = {numRows: 5, rows: []};
+
+                for (var i = 0; i < $scope.board.numRows; i ++) {
+
+                    row = {
+                        size: i + 1,
+                        full: 0,
+                        colour: null,
+                    };
+                    $scope.board.rows.push(row);
+                }
+
+                $scope.board.rows[2].colour = 'red';
+                $scope.board.rows[2].full = 2;
+                console.log($scope.board);
+                
             }
 
             
@@ -181,6 +215,11 @@
             $scope.createRoom = function() {
                 
                 socket.emit('createRoom');
+            }
+
+            if (DEBUG) {
+                $scope.createRoom();
+                // $scope.joinRoom();
             }
 
             socket.on('roomCreated', (room) => {
